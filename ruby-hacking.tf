@@ -1,10 +1,76 @@
+# Set us up the provider
 provider "aws" {
-    access_key = "${var.aws_access_key}"
-    secret_key = "${var.aws_secret_key}"
-    region = "us-east-1"
+  access_key = "${var.aws_access_key}"
+  secret_key = "${var.aws_secret_key}"
+  region = "${var.aws_region}"
 }
 
-resource "aws_instance" "example" {
-    ami = "ami-aa7ab6c2"
-    instance_type = "t1.micro"
+# Define a basic VPC
+resource "aws_vpc" "rubyhacking" {
+  cidr_block = "10.0.0.0/16"
+  enable_dns_hostnames = true
+
+  tags {
+    Name = "rubyhacking"
+  }
+
+}
+
+# Attach an internet gateway
+resource "aws_internet_gateway" "rubyhacking" {
+	vpc_id = "${aws_vpc.rubyhacking.id}"
+}
+
+# Create a security group to allow ssh
+resource "aws_security_group" "rubyhacking" {
+  name = "rubyhacking"
+  description = "SG for Ruby Hacking VPC"
+
+  ingress {
+      from_port = 22
+      to_port = 22
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags {
+    Name = "rubyhacking"
+  }
+
+  vpc_id = "${aws_vpc.rubyhacking.id}"
+}
+
+
+resource "aws_subnet" "rubyhacking-subnet" {
+  cidr_block = "10.0.0.0/24"
+
+  tags {
+    Name = "rubyhacking"
+  }
+
+  vpc_id = "${aws_vpc.rubyhacking.id}"
+}
+
+resource "aws_instance" "rubyhacking" {
+  ami = "${var.aws_ami}"
+  instance_type = "${var.aws_instance_type}"
+  key_name = "${var.aws_key_name}"
+
+  connection {
+    user = "${var.aws_user_name}"
+    key_file = "${var.aws_key_path}"
+  }
+
+  security_groups = ["${aws_security_group.rubyhacking.name}"]
+
+  provisioner "remote-exec" {
+    inline = [
+        "echo ohhai >> /var/tmp/muhfile"
+    ]
+  }
+
+  tags {
+    Name = "rubyhacking"
+  }
+
 }

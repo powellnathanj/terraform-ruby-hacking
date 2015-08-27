@@ -28,6 +28,13 @@ resource "aws_security_group" "rubyhacking" {
       cidr_blocks = ["0.0.0.0/0"]
   }
 
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags {
     Name = "rubyhacking"
   }
@@ -67,26 +74,27 @@ resource "aws_internet_gateway" "rubyhacking" {
 	vpc_id = "${aws_vpc.rubyhacking.id}"
 }
 
+# Spin up an insance
 resource "aws_instance" "rubyhacking" {
   ami = "${var.aws_ami}"
   instance_type = "${var.aws_instance_type}"
   key_name = "${var.aws_key_name}"
+  security_groups = ["${aws_security_group.rubyhacking.id}"]
+  subnet_id = "${aws_subnet.rubyhacking.id}"
 
   connection {
     user = "${var.aws_user_name}"
     key_file = "${var.aws_key_path}"
   }
 
-  security_groups = ["${aws_security_group.rubyhacking.name}"]
-
-  provisioner "remote-exec" {
-    inline = [
-        "echo ohhai >> /var/tmp/muhfile"
-    ]
-  }
-
   tags {
     Name = "rubyhacking"
   }
 
+}
+
+# Associate elastic ip with my instance
+resource "aws_eip" "rubyhacking" {
+  instance = "${aws_instance.rubyhacking.id}"
+  vpc = true
 }

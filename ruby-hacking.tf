@@ -74,6 +74,12 @@ resource "aws_internet_gateway" "rubyhacking" {
 	vpc_id = "${aws_vpc.rubyhacking.id}"
 }
 
+# Associate elastic ip with my instance
+resource "aws_eip" "rubyhacking" {
+  instance = "${aws_instance.rubyhacking.id}"
+  vpc = true
+}
+
 # Spin up an insance
 resource "aws_instance" "rubyhacking" {
   ami = "${var.aws_ami}"
@@ -91,10 +97,4 @@ resource "aws_instance" "rubyhacking" {
     Name = "rubyhacking"
   }
 
-}
-
-# Associate elastic ip with my instance
-resource "aws_eip" "rubyhacking" {
-  instance = "${aws_instance.rubyhacking.id}"
-  vpc = true
 }

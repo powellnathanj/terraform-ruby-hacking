@@ -16,11 +16,6 @@ resource "aws_vpc" "rubyhacking" {
 
 }
 
-# Attach an internet gateway
-resource "aws_internet_gateway" "rubyhacking" {
-	vpc_id = "${aws_vpc.rubyhacking.id}"
-}
-
 # Create a security group to allow ssh
 resource "aws_security_group" "rubyhacking" {
   name = "rubyhacking"
@@ -40,8 +35,8 @@ resource "aws_security_group" "rubyhacking" {
   vpc_id = "${aws_vpc.rubyhacking.id}"
 }
 
-
-resource "aws_subnet" "rubyhacking-subnet" {
+# Subnet
+resource "aws_subnet" "rubyhacking" {
   cidr_block = "10.0.0.0/24"
 
   tags {
@@ -49,6 +44,27 @@ resource "aws_subnet" "rubyhacking-subnet" {
   }
 
   vpc_id = "${aws_vpc.rubyhacking.id}"
+}
+
+# Define a route table
+resource "aws_route_table" "rubyhacking" {
+  vpc_id = "${aws_vpc.rubyhacking.id}"
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.rubyhacking.id}"
+  }
+}
+
+# Define a route table association
+resource "aws_route_table_association" "rubyhacking" {
+  subnet_id = "${aws_subnet.rubyhacking.id}"
+  route_table_id = "${aws_route_table.rubyhacking.id}"
+}
+
+# Attach an internet gateway
+resource "aws_internet_gateway" "rubyhacking" {
+	vpc_id = "${aws_vpc.rubyhacking.id}"
 }
 
 resource "aws_instance" "rubyhacking" {
